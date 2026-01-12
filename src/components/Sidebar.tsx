@@ -65,7 +65,7 @@ export function Sidebar({
     <aside className="sidebar">
       <div className="sidebar-header">
         <div>
-          <div className="subtitle">Workspaces</div>
+          <div className="subtitle">Projects</div>
         </div>
         <button
           className="ghost workspace-add"

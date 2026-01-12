@@ -9,10 +9,12 @@ export function MainHeader({ workspace, branchName }: MainHeaderProps) {
   return (
     <header className="main-header" data-tauri-drag-region>
       <div className="workspace-header">
-        <div className="branch-pill">{branchName}</div>
-        <div>
-          <div className="workspace-title">{workspace.name}</div>
-          <div className="workspace-meta">{workspace.path}</div>
+        <div className="workspace-title-line">
+          <span className="workspace-title">{workspace.name}</span>
+          <span className="workspace-separator" aria-hidden>
+            ›
+          </span>
+          <span className="workspace-branch">{branchName}</span>
         </div>
       </div>
     </header>

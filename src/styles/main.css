@@ -15,13 +15,14 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  min-width: 0;
   -webkit-app-region: no-drag;
 }
 
 .workspace-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  min-width: 0;
 }
 
 .main-topbar {
@@ -40,34 +41,49 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
+  flex: 1;
 }
 
 .main-topbar-left .icon-button {
   padding: 6px 10px;
 }
 
-.branch-pill {
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+.workspace-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workspace-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
-.workspace-meta {
+.workspace-separator {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.workspace-branch {
   color: rgba(255, 255, 255, 0.6);
-  font-size: 11px;
-  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .actions {
   display: flex;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .content {
