@@ -1223,10 +1223,16 @@ export function useThreads({
         payload: { workspaceId: workspace.id, path: workspace.path },
       });
       try {
-        const allThreads: any[] = [];
+        const matchingThreads: any[] = [];
+        const targetCount = 20;
+        const pageSize = 20;
         let cursor: string | null = null;
         do {
-          const response = await listThreadsService(workspace.id, cursor, 50);
+          const response = await listThreadsService(
+            workspace.id,
+            cursor,
+            pageSize,
+          );
           onDebug?.({
             id: `${Date.now()}-server-thread-list`,
             timestamp: Date.now(),
@@ -1237,19 +1243,29 @@ export function useThreads({
           const result = response.result ?? response;
           const data = Array.isArray(result?.data) ? result.data : [];
           const nextCursor = result?.nextCursor ?? result?.next_cursor ?? null;
-          allThreads.push(...data);
+          matchingThreads.push(
+            ...data.filter(
+              (thread) => String(thread?.cwd ?? "") === workspace.path,
+            ),
+          );
           cursor = nextCursor;
-        } while (cursor);
+        } while (cursor && matchingThreads.length < targetCount);
 
-        const matching = allThreads.filter(
-          (thread) => String(thread?.cwd ?? "") === workspace.path,
-        );
-        matching.sort((a, b) => {
+        const uniqueById = new Map<string, any>();
+        matchingThreads.forEach((thread) => {
+          const id = String(thread?.id ?? "");
+          if (id && !uniqueById.has(id)) {
+            uniqueById.set(id, thread);
+          }
+        });
+        const uniqueThreads = Array.from(uniqueById.values());
+        uniqueThreads.sort((a, b) => {
           const aCreated = Number(a?.createdAt ?? a?.created_at ?? 0);
           const bCreated = Number(b?.createdAt ?? b?.created_at ?? 0);
           return bCreated - aCreated;
         });
-        const summaries = matching
+        const summaries = uniqueThreads
+          .slice(0, targetCount)
           .map((thread, index) => {
             const preview = asString(thread?.preview ?? "").trim();
             const fallbackName = `Agent ${index + 1}`;
@@ -1262,17 +1278,10 @@ export function useThreads({
             return { id: String(thread?.id ?? ""), name };
           })
           .filter((entry) => entry.id);
-
-        const unique = new Map<string, ThreadSummary>();
-        summaries.forEach((thread) => {
-          if (!unique.has(thread.id)) {
-            unique.set(thread.id, thread);
-          }
-        });
         dispatch({
           type: "setThreads",
           workspaceId: workspace.id,
-          threads: Array.from(unique.values()),
+          threads: summaries,
         });
       } catch (error) {
         onDebug?.({
