@@ -110,6 +110,13 @@ export type GitLogResponse = {
   upstream: string | null;
 };
 
+export type GitHubIssue = {
+  number: number;
+  title: string;
+  url: string;
+  updatedAt: string;
+};
+
 export type TokenUsageBreakdown = {
   totalTokens: number;
   inputTokens: number;

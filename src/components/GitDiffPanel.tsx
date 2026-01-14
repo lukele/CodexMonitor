@@ -1,14 +1,15 @@
-import type { GitLogEntry } from "../types";
+import type { GitHubIssue, GitLogEntry } from "../types";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import { LogicalPosition } from "@tauri-apps/api/dpi";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { GitBranch } from "lucide-react";
+import { formatRelativeTime } from "../utils/time";
 
 type GitDiffPanelProps = {
-  mode: "diff" | "log";
-  onModeChange: (mode: "diff" | "log") => void;
+  mode: "diff" | "log" | "issues";
+  onModeChange: (mode: "diff" | "log" | "issues") => void;
   branchName: string;
   totalAdditions: number;
   totalDeletions: number;
@@ -22,6 +23,9 @@ type GitDiffPanelProps = {
   logAheadEntries?: GitLogEntry[];
   logBehindEntries?: GitLogEntry[];
   logUpstream?: string | null;
+  issues?: GitHubIssue[];
+  issuesLoading?: boolean;
+  issuesError?: string | null;
   gitRemoteUrl?: string | null;
   selectedPath?: string | null;
   onSelectFile?: (path: string) => void;
@@ -108,6 +112,9 @@ export function GitDiffPanel({
   logAheadEntries = [],
   logBehindEntries = [],
   logUpstream = null,
+  issues = [],
+  issuesLoading = false,
+  issuesError = null,
 }: GitDiffPanelProps) {
   const githubBaseUrl = (() => {
     if (!gitRemoteUrl) {
@@ -202,13 +209,22 @@ export function GitDiffPanel({
           >
             Log
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "issues"}
+            className={mode === "issues" ? "active" : ""}
+            onClick={() => onModeChange("issues")}
+          >
+            Issues
+          </button>
         </div>
       </div>
       {mode === "diff" ? (
         <>
           <div className="diff-status">{diffStatusLabel}</div>
         </>
-      ) : (
+      ) : mode === "log" ? (
         <>
           <div className="diff-status">{logCountLabel}</div>
           <div className="git-log-sync">
@@ -221,8 +237,20 @@ export function GitDiffPanel({
             )}
           </div>
         </>
+      ) : (
+        <>
+          <div className="diff-status diff-status-issues">
+            <span>GitHub issues</span>
+            {issuesLoading && <span className="git-panel-spinner" aria-hidden />}
+          </div>
+          <div className="git-log-sync">
+            <span>{issues.length} open</span>
+          </div>
+        </>
       )}
-      <div className="diff-branch">{branchName || "unknown"}</div>
+      {mode !== "issues" && (
+        <div className="diff-branch">{branchName || "unknown"}</div>
+      )}
       {mode === "diff" ? (
         <div className="diff-list">
           {error && <div className="diff-error">{error}</div>}
@@ -272,7 +300,7 @@ export function GitDiffPanel({
             );
           })}
         </div>
-      ) : (
+      ) : mode === "log" ? (
         <div className="git-log-list">
           {logError && <div className="diff-error">{logError}</div>}
           {!logError && logLoading && (
@@ -376,6 +404,35 @@ export function GitDiffPanel({
               </div>
             </div>
           )}
+        </div>
+      ) : (
+        <div className="git-issues-list">
+          {issuesError && <div className="diff-error">{issuesError}</div>}
+          {!issuesError && !issuesLoading && !issues.length && (
+            <div className="diff-empty">No open issues.</div>
+          )}
+          {issues.map((issue) => {
+            const relativeTime = formatRelativeTime(new Date(issue.updatedAt).getTime());
+            return (
+              <a
+                key={issue.number}
+                className="git-issue-entry"
+                href={issue.url}
+                onClick={(event) => {
+                  event.preventDefault();
+                  void openUrl(issue.url);
+                }}
+              >
+                <div className="git-issue-summary">
+                  <span className="git-issue-title">
+                    <span className="git-issue-number">#{issue.number}</span>{" "}
+                    {issue.title}{" "}
+                    <span className="git-issue-date">· {relativeTime}</span>
+                  </span>
+                </div>
+              </a>
+            );
+          })}
         </div>
       )}
     </aside>

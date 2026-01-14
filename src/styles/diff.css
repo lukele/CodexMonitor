@@ -59,6 +59,9 @@
   padding: 4px 8px;
   border-radius: 999px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .git-panel-toggle button.active {
@@ -77,10 +80,10 @@
   color: var(--text-faint);
 }
 
-.diff-totals {
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  color: var(--text-faint);
+.diff-status-issues {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .diff-list {
@@ -237,6 +240,16 @@
   min-height: 0;
 }
 
+.git-issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 2px;
+  min-height: 0;
+}
+
 .git-log-sync {
   font-size: 11px;
   color: var(--text-faint);
@@ -273,6 +286,20 @@
   cursor: context-menu;
 }
 
+.git-issue-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: inherit;
+  text-decoration: none;
+}
+
+.git-issue-entry:last-child {
+  border-bottom: none;
+}
+
 .git-log-entry-compact {
   padding: 4px 0;
 }
@@ -284,6 +311,46 @@
 .git-log-summary {
   font-size: 12px;
   color: var(--text-emphasis);
+}
+
+.git-issue-summary {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-emphasis);
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.git-issue-number {
+  font-family: "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.git-issue-title {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+}
+
+.git-issue-date {
+  color: var(--text-faint);
+}
+
+.git-panel-spinner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--text-strong);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .git-log-meta {

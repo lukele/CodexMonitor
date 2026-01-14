@@ -6,7 +6,13 @@ import type {
   WorkspaceInfo,
   WorkspaceSettings,
 } from "../types";
-import type { GitFileDiff, GitFileStatus, GitLogResponse, ReviewTarget } from "../types";
+import type {
+  GitFileDiff,
+  GitFileStatus,
+  GitHubIssue,
+  GitLogResponse,
+  ReviewTarget,
+} from "../types";
 
 export async function pickWorkspacePath(): Promise<string | null> {
   const selection = await open({ directory: true, multiple: false });
@@ -141,6 +147,12 @@ export async function getGitLog(
 
 export async function getGitRemote(workspace_id: string): Promise<string | null> {
   return invoke("get_git_remote", { workspaceId: workspace_id });
+}
+
+export async function getGitHubIssues(
+  workspace_id: string,
+): Promise<GitHubIssue[]> {
+  return invoke("get_github_issues", { workspaceId: workspace_id });
 }
 
 export async function getModelList(workspaceId: string) {

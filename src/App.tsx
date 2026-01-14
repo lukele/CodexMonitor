@@ -43,6 +43,7 @@ import { useWindowDrag } from "./hooks/useWindowDrag";
 import { useGitStatus } from "./hooks/useGitStatus";
 import { useGitDiffs } from "./hooks/useGitDiffs";
 import { useGitLog } from "./hooks/useGitLog";
+import { useGitHubIssues } from "./hooks/useGitHubIssues";
 import { useGitRemote } from "./hooks/useGitRemote";
 import { useModels } from "./hooks/useModels";
 import { useSkills } from "./hooks/useSkills";
@@ -87,7 +88,9 @@ function MainApp() {
   const isPhone = layoutMode === "phone";
   const [centerMode, setCenterMode] = useState<"chat" | "diff">("chat");
   const [selectedDiffPath, setSelectedDiffPath] = useState<string | null>(null);
-  const [gitPanelMode, setGitPanelMode] = useState<"diff" | "log">("diff");
+  const [gitPanelMode, setGitPanelMode] = useState<
+    "diff" | "log" | "issues"
+  >("diff");
   const [accessMode, setAccessMode] = useState<AccessMode>("current");
   const [activeTab, setActiveTab] = useState<
     "projects" | "codex" | "git" | "log"
@@ -175,6 +178,11 @@ function MainApp() {
     isLoading: gitLogLoading,
     error: gitLogError,
   } = useGitLog(activeWorkspace, shouldLoadGitLog);
+  const {
+    issues: gitIssues,
+    isLoading: gitIssuesLoading,
+    error: gitIssuesError,
+  } = useGitHubIssues(activeWorkspace, gitPanelMode === "issues");
   const { remote: gitRemoteUrl } = useGitRemote(activeWorkspace);
   const {
     models,
@@ -767,6 +775,9 @@ function MainApp() {
                   logAheadEntries={gitLogAheadEntries}
                   logBehindEntries={gitLogBehindEntries}
                   logUpstream={gitLogUpstream}
+                  issues={gitIssues}
+                  issuesLoading={gitIssuesLoading}
+                  issuesError={gitIssuesError}
                   gitRemoteUrl={gitRemoteUrl}
                 />
               </div>
@@ -874,6 +885,9 @@ function MainApp() {
                   logAheadEntries={gitLogAheadEntries}
                   logBehindEntries={gitLogBehindEntries}
                   logUpstream={gitLogUpstream}
+                  issues={gitIssues}
+                  issuesLoading={gitIssuesLoading}
+                  issuesError={gitIssuesError}
                   gitRemoteUrl={gitRemoteUrl}
                 />
                 <div className="tablet-git-viewer">
@@ -1025,6 +1039,9 @@ function MainApp() {
                     logAheadEntries={gitLogAheadEntries}
                     logBehindEntries={gitLogBehindEntries}
                     logUpstream={gitLogUpstream}
+                    issues={gitIssues}
+                    issuesLoading={gitIssuesLoading}
+                    issuesError={gitIssuesError}
                     gitRemoteUrl={gitRemoteUrl}
                   />
                 </div>

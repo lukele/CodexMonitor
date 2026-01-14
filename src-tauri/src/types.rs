@@ -39,6 +39,15 @@ pub(crate) struct GitLogResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub(crate) struct GitHubIssue {
+    pub(crate) number: u64,
+    pub(crate) title: String,
+    pub(crate) url: String,
+    #[serde(rename = "updatedAt")]
+    pub(crate) updated_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct BranchInfo {
     pub(crate) name: String,
     pub(crate) last_commit: i64,
