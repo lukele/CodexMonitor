@@ -1,0 +1,8 @@
+node_modules/
+dist/
+target/
+.DS_Store
+*.log
+/pi-adapter/node_modules/
+/pi-adapter/dist/
+/claude-app-server/target/

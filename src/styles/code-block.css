@@ -1,0 +1,113 @@
+.code-block {
+  background: var(--bg-subtle);
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.code-block code {
+  display: block;
+  padding: 8px 0;
+}
+
+.code-block-line {
+  display: flex;
+  padding: 0 12px 0 0;
+  min-height: 1.5em;
+}
+
+.code-block-line:hover {
+  background: var(--bg-hover);
+}
+
+.code-block-line-number {
+  display: inline-block;
+  min-width: 36px;
+  padding: 0 12px 0 8px;
+  text-align: right;
+  color: var(--text-fainter);
+  user-select: none;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-subtle);
+  margin-right: 12px;
+}
+
+.code-block-line-content {
+  flex: 1;
+  min-width: 0;
+  white-space: pre;
+  color: var(--text-base);
+}
+
+/* Syntax highlighting tokens */
+.code-block .token.comment,
+.code-block .token.prolog,
+.code-block .token.doctype,
+.code-block .token.cdata {
+  color: var(--text-accent);
+}
+
+.code-block .token.punctuation {
+  color: var(--text-subtle);
+}
+
+.code-block .token.property,
+.code-block .token.tag,
+.code-block .token.constant,
+.code-block .token.symbol,
+.code-block .token.deleted {
+  color: #ff8f8f;
+}
+
+.code-block .token.boolean,
+.code-block .token.number {
+  color: #ffca7a;
+}
+
+.code-block .token.selector,
+.code-block .token.attr-name,
+.code-block .token.string,
+.code-block .token.char,
+.code-block .token.builtin,
+.code-block .token.inserted {
+  color: #9ae6b4;
+}
+
+.code-block .token.operator,
+.code-block .token.entity,
+.code-block .token.url,
+.code-block .token.variable {
+  color: #9fc2ff;
+}
+
+.code-block .token.atrule,
+.code-block .token.attr-value,
+.code-block .token.keyword {
+  color: #b8a6ff;
+}
+
+.code-block .token.function,
+.code-block .token.class-name {
+  color: #7fd1ff;
+}
+
+/* No line numbers variant */
+.code-block.no-line-numbers .code-block-line-number {
+  display: none;
+}
+
+.code-block.no-line-numbers .code-block-line {
+  padding-left: 12px;
+}
+
+.code-block.no-line-numbers .code-block-line-content {
+  margin-left: 0;
+}

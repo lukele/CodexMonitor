@@ -1,0 +1,181 @@
+diff --git a/src-tauri/src/codex.rs b/src-tauri/src/codex.rs
+--- a/src-tauri/src/codex.rs
++++ b/src-tauri/src/codex.rs
+@@ -1,5 +1,6 @@
+ use serde::Serialize;
+ use serde_json::{json, Map, Value};
++use serde::Deserialize;
+ use std::collections::HashMap;
+ use std::env;
+ use std::io::ErrorKind;
+@@ -17,6 +18,14 @@ use tokio::sync::{oneshot, Mutex};
+ use crate::state::AppState;
+ use crate::types::WorkspaceEntry;
+ 
++/// Backend provider for the workspace
++#[derive(Clone, Serialize, Deserialize, Debug, Default)]
++#[serde(rename_all = "lowercase")]
++pub enum Backend {
++    #[default]
++    Codex,
++    Claude,
++}
++
+ #[derive(Serialize, Clone)]
+ struct AppServerEvent {
+     workspace_id: String,
+@@ -25,6 +34,7 @@ struct AppServerEvent {
+ 
+ pub(crate) struct WorkspaceSession {
+     pub(crate) entry: WorkspaceEntry,
++    pub(crate) backend: Backend,
+     pub(crate) child: Mutex<Child>,
+     pub(crate) stdin: Mutex<ChildStdin>,
+     pub(crate) pending: Mutex<HashMap<u64, oneshot::Sender<Value>>>,
+@@ -100,12 +110,31 @@ async fn check_codex_installation(codex_bin: Option<String>) -> Result<Option<St
+     Ok(if version.is_empty() { None } else { Some(version) })
+ }
+ 
++fn build_backend_command(backend: &Backend, codex_bin: Option<String>) -> Command {
++    match backend {
++        Backend::Codex => {
++            let mut cmd = build_codex_command_with_bin(codex_bin);
++            cmd.arg("app-server");
++            cmd
++        }
++        Backend::Claude => {
++            // Use claude-app-server binary
++            let bin = std::env::var("CLAUDE_APP_SERVER_BIN")
++                .unwrap_or_else(|_| "claude-app-server".to_string());
++            Command::new(bin)
++        }
++    }
++}
++
+ pub(crate) async fn spawn_workspace_session(
+     entry: WorkspaceEntry,
+     default_codex_bin: Option<String>,
++    backend: Backend,
+     app_handle: AppHandle,
+ ) -> Result<Arc<WorkspaceSession>, String> {
+-    let codex_bin = entry
++    let codex_bin = if matches!(backend, Backend::Codex) {
++        entry
+         .codex_bin
+         .clone()
+         .filter(|value| !value.trim().is_empty())
+-        .or(default_codex_bin);
+-    let _ = check_codex_installation(codex_bin.clone()).await?;
++            .or(default_codex_bin)
++    } else {
++        None
++    };
+ 
+-    let mut command = build_codex_command_with_bin(codex_bin);
++    if matches!(backend, Backend::Codex) {
++        let _ = check_codex_installation(codex_bin.clone()).await?;
++    }
++
++    let mut command = build_backend_command(&backend, codex_bin);
+     command.current_dir(&entry.path);
+-    command.arg("app-server");
+     command.stdin(std::process::Stdio::piped());
+     command.stdout(std::process::Stdio::piped());
+     command.stderr(std::process::Stdio::piped());
+
+diff --git a/src-tauri/src/types.rs b/src-tauri/src/types.rs
+--- a/src-tauri/src/types.rs
++++ b/src-tauri/src/types.rs
+@@ -1,5 +1,6 @@
+ use serde::{Deserialize, Serialize};
+ use std::path::PathBuf;
++use crate::codex::Backend;
+ 
+ #[derive(Clone, Serialize, Deserialize, Debug)]
+ pub struct WorkspaceSettings {
+@@ -18,6 +19,8 @@ pub struct WorkspaceEntry {
+     pub parent_id: Option<String>,
+     #[serde(default)]
+     pub worktree: Option<WorktreeInfo>,
++    #[serde(default)]
++    pub backend: Backend,
+     #[serde(default)]
+     pub settings: WorkspaceSettings,
+ }
+
+diff --git a/src/types.ts b/src/types.ts
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -4,6 +4,8 @@ export type WorkspaceSettings = {
+ 
+ export type WorkspaceKind = "main" | "worktree";
+ 
++export type Backend = "codex" | "claude";
++
+ export type WorktreeInfo = {
+   branch: string;
+ };
+@@ -16,6 +18,7 @@ export type WorkspaceInfo = {
+   kind?: WorkspaceKind;
+   parentId?: string | null;
+   worktree?: WorktreeInfo | null;
++  backend: Backend;
+   settings: WorkspaceSettings;
+ };
+ 
+diff --git a/src/components/SettingsView.tsx b/src/components/SettingsView.tsx
+--- a/src/components/SettingsView.tsx
++++ b/src/components/SettingsView.tsx
+@@ -1,6 +1,7 @@
+ import { useState, useEffect } from "react";
+ import "../styles/settings.css";
+-import type { AppSettings, CodexDoctorResult } from "../types";
++import type { AppSettings, CodexDoctorResult, Backend } from "../types";
+ 
+ type SettingsViewProps = {
+   settings: AppSettings;
+@@ -8,6 +9,8 @@ type SettingsViewProps = {
+   doctorResult: CodexDoctorResult | null;
+   onRunDoctor: () => void;
+   onClose: () => void;
++  currentBackend?: Backend;
++  onBackendChange?: (backend: Backend) => void;
+ };
+ 
+ export function SettingsView({
+@@ -16,6 +19,8 @@ export function SettingsView({
+   doctorResult,
+   onRunDoctor,
+   onClose,
++  currentBackend = "codex",
++  onBackendChange,
+ }: SettingsViewProps) {
+   const [codexBin, setCodexBin] = useState(settings.codexBin ?? "");
+   const [accessMode, setAccessMode] = useState(settings.defaultAccessMode);
+@@ -58,6 +63,27 @@ export function SettingsView({
+   return (
+     <div className="settings-view">
+       <h2>Settings</h2>
++      
++      <div className="settings-section">
++        <h3>AI Backend</h3>
++        <div className="settings-row">
++          <label htmlFor="backend">Model Provider</label>
++          <select
++            id="backend"
++            value={currentBackend}
++            onChange={(e) => onBackendChange?.(e.target.value as Backend)}
++          >
++            <option value="codex">OpenAI Codex</option>
++            <option value="claude">Anthropic Claude</option>
++          </select>
++          <p className="settings-hint">
++            {currentBackend === "codex" 
++              ? "Uses OpenAI's Codex CLI (requires Codex installation)"
++              : "Uses Claude API directly (requires ANTHROPIC_API_KEY)"}
++          </p>
++        </div>
++      </div>
+
+       <div className="settings-section">
+         <h3>Codex Binary</h3>

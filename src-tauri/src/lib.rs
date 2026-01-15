@@ -1,0 +1,165 @@
+use tauri::menu::{Menu, MenuItemBuilder, PredefinedMenuItem, Submenu};
+use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+
+mod codex;
+mod git;
+mod settings;
+mod state;
+mod storage;
+mod types;
+mod utils;
+mod workspaces;
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .enable_macos_default_menu(false)
+        .menu(|handle| {
+            let app_name = handle.package_info().name.clone();
+            let about_item = MenuItemBuilder::with_id("about", format!("About {app_name}"))
+                .build(handle)?;
+            let app_menu = Submenu::with_items(
+                handle,
+                app_name,
+                true,
+                &[
+                    &about_item,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::services(handle, None)?,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::hide(handle, None)?,
+                    &PredefinedMenuItem::hide_others(handle, None)?,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::quit(handle, None)?,
+                ],
+            )?;
+
+            let file_menu = Submenu::with_items(
+                handle,
+                "File",
+                true,
+                &[
+                    &PredefinedMenuItem::close_window(handle, None)?,
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::quit(handle, None)?,
+                ],
+            )?;
+
+            let edit_menu = Submenu::with_items(
+                handle,
+                "Edit",
+                true,
+                &[
+                    &PredefinedMenuItem::undo(handle, None)?,
+                    &PredefinedMenuItem::redo(handle, None)?,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::cut(handle, None)?,
+                    &PredefinedMenuItem::copy(handle, None)?,
+                    &PredefinedMenuItem::paste(handle, None)?,
+                    &PredefinedMenuItem::select_all(handle, None)?,
+                ],
+            )?;
+
+            let view_menu = Submenu::with_items(
+                handle,
+                "View",
+                true,
+                &[&PredefinedMenuItem::fullscreen(handle, None)?],
+            )?;
+
+            let window_menu = Submenu::with_items(
+                handle,
+                "Window",
+                true,
+                &[
+                    &PredefinedMenuItem::minimize(handle, None)?,
+                    &PredefinedMenuItem::maximize(handle, None)?,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::close_window(handle, None)?,
+                ],
+            )?;
+
+            let help_menu = Submenu::with_items(handle, "Help", true, &[])?;
+
+            Menu::with_items(
+                handle,
+                &[
+                    &app_menu,
+                    &file_menu,
+                    &edit_menu,
+                    &view_menu,
+                    &window_menu,
+                    &help_menu,
+                ],
+            )
+        })
+        .on_menu_event(|app, event| {
+            if event.id() == "about" {
+                if let Some(window) = app.get_webview_window("about") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                    return;
+                }
+                let _ = WebviewWindowBuilder::new(
+                    app,
+                    "about",
+                    WebviewUrl::App("index.html".into()),
+                )
+                .title("About Codex Monitor")
+                .resizable(false)
+                .inner_size(360.0, 240.0)
+                .center()
+                .build();
+            }
+        })
+        .setup(|app| {
+            let state = state::AppState::load(&app.handle());
+            app.manage(state);
+            #[cfg(desktop)]
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
+            Ok(())
+        })
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_process::init())
+        .invoke_handler(tauri::generate_handler![
+            settings::get_app_settings,
+            settings::update_app_settings,
+            codex::codex_doctor,
+            workspaces::list_workspaces,
+            workspaces::add_workspace,
+            workspaces::add_worktree,
+            workspaces::remove_workspace,
+            workspaces::remove_worktree,
+            workspaces::update_workspace_settings,
+            workspaces::update_workspace_codex_bin,
+            codex::start_thread,
+            codex::send_user_message,
+            codex::turn_interrupt,
+            codex::start_review,
+            codex::respond_to_server_request,
+            codex::resume_thread,
+            codex::list_threads,
+            codex::archive_thread,
+            workspaces::connect_workspace,
+            git::get_git_status,
+            git::get_git_diffs,
+            git::get_git_log,
+            git::get_git_remote,
+            git::get_github_issues,
+            workspaces::list_workspace_files,
+            git::list_git_branches,
+            git::checkout_git_branch,
+            git::create_git_branch,
+            codex::model_list,
+            codex::account_rate_limits,
+            codex::skills_list,
+            codex::switch_backend,
+            codex::get_workspace_backend,
+            codex::get_all_models,
+            codex::get_auth_status
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
