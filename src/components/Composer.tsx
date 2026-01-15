@@ -162,6 +162,24 @@ export function Composer({
         onTextChange={handleTextChange}
         onSelectionChange={handleSelectionChange}
         onKeyDown={(event) => {
+          if (event.key === "Enter" && event.shiftKey) {
+            event.preventDefault();
+            const textarea = textareaRef.current;
+            if (!textarea) {
+              return;
+            }
+            const start = textarea.selectionStart ?? text.length;
+            const end = textarea.selectionEnd ?? start;
+            const nextText = `${text.slice(0, start)}\n${text.slice(end)}`;
+            const nextCursor = start + 1;
+            setComposerText(nextText);
+            requestAnimationFrame(() => {
+              textarea.focus();
+              textarea.setSelectionRange(nextCursor, nextCursor);
+              handleSelectionChange(nextCursor);
+            });
+            return;
+          }
           handleInputKeyDown(event);
           if (event.defaultPrevented) {
             return;
