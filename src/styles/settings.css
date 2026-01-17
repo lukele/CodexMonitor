@@ -496,3 +496,37 @@
     border-bottom: 1px solid var(--border-muted);
   }
 }
+
+/* Providers section */
+.settings-providers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.settings-provider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface-control);
+  border-radius: 8px;
+  border: 1px solid var(--border-muted);
+}
+
+.settings-provider-icon {
+  font-size: 18px;
+}
+
+.settings-provider-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+.settings-provider-status {
+  font-size: 12px;
+  color: var(--text-subtle);
+}

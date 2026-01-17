@@ -361,60 +361,44 @@ export const Messages = memo(function Messages({
           );
         }
         if (item.kind === "reasoning") {
-          const summaryText = item.summary || item.content;
-          const summaryLines = summaryText.split("\n");
-          const trimmedLines = summaryLines.map((line) => line.trim());
-          const titleLineIndex = trimmedLines.findIndex(Boolean);
-          const rawTitle =
-            titleLineIndex >= 0 ? trimmedLines[titleLineIndex] : "Reasoning";
-          const cleanTitle = rawTitle
-            .replace(/[`*_~]/g, "")
-            .replace(/\[(.*?)\]\(.*?\)/g, "$1")
-            .trim();
-          const summaryTitle =
-            cleanTitle.length > 80
-              ? `${cleanTitle.slice(0, 80)}…`
-              : cleanTitle || "Reasoning";
-          const reasoningTone: StatusTone = summaryText ? "completed" : "processing";
+          const fullContent = item.content || item.summary || "";
           const isExpanded = expandedItems.has(item.id);
-          const bodyText =
-            titleLineIndex >= 0
-              ? summaryLines
-                  .filter((_, index) => index !== titleLineIndex)
-                  .join("\n")
-                  .trim()
-              : "";
-          const showReasoningBody = Boolean(bodyText);
+          const reasoningTone: StatusTone = fullContent ? "completed" : "processing";
+          
+          // Create truncated preview (first 80 chars of first line)
+          const firstLine = fullContent.split("\n")[0] || "";
+          const previewText = firstLine.length > 80 
+            ? `${firstLine.slice(0, 80)}…` 
+            : firstLine;
+          
           return (
-            <div key={item.id} className="tool-inline reasoning-inline">
+            <div key={item.id} className={`tool-inline reasoning-inline ${isExpanded ? "tool-inline-expanded" : ""}`}>
               <button
                 type="button"
                 className="tool-inline-bar-toggle"
                 onClick={() => toggleExpanded(item.id)}
-                aria-expanded={expandedItems.has(item.id)}
-                aria-label="Toggle reasoning details"
+                aria-expanded={isExpanded}
+                aria-label="Toggle thinking details"
               />
               <div className="tool-inline-content">
                 <button
                   type="button"
                   className="tool-inline-summary tool-inline-toggle"
                   onClick={() => toggleExpanded(item.id)}
-                  aria-expanded={expandedItems.has(item.id)}
+                  aria-expanded={isExpanded}
                 >
                   <span
                     className={`tool-inline-dot ${reasoningTone}`}
                     aria-hidden
                   />
-                  <span className="tool-inline-value">{summaryTitle}</span>
+                  <span className="tool-inline-value">
+                    {isExpanded ? "Thinking" : (previewText || "Thinking")}
+                  </span>
                 </button>
-                {showReasoningBody && (
-                  <Markdown
-                    value={bodyText}
-                    className={`reasoning-inline-detail markdown ${
-                      isExpanded ? "" : "tool-inline-clamp"
-                    }`}
-                    onOpenFileLink={openFileLink}
-                  />
+                {isExpanded && fullContent && (
+                  <div className="reasoning-inline-detail markdown">
+                    <Markdown value={fullContent} onOpenFileLink={openFileLink} />
+                  </div>
                 )}
               </div>
             </div>

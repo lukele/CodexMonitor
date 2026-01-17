@@ -372,8 +372,7 @@ pub(crate) async fn remove_workspace(
     let parent_path = PathBuf::from(&entry.path);
     for child in &child_worktrees {
         if let Some(session) = state.sessions.lock().await.remove(&child.id) {
-            let mut child_process = session.child.lock().await;
-            let _ = child_process.kill().await;
+            let _ = session.kill().await;
         }
         let child_path = PathBuf::from(&child.path);
         if child_path.exists() {
@@ -387,8 +386,7 @@ pub(crate) async fn remove_workspace(
     let _ = run_git_command(&parent_path, &["worktree", "prune", "--expire", "now"]).await;
 
     if let Some(session) = state.sessions.lock().await.remove(&id) {
-        let mut child = session.child.lock().await;
-        let _ = child.kill().await;
+        let _ = session.kill().await;
     }
 
     {
@@ -430,8 +428,7 @@ pub(crate) async fn remove_worktree(
     };
 
     if let Some(session) = state.sessions.lock().await.remove(&entry.id) {
-        let mut child = session.child.lock().await;
-        let _ = child.kill().await;
+        let _ = session.kill().await;
     }
 
     let parent_path = PathBuf::from(&parent.path);

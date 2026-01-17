@@ -25,3 +25,10 @@ dist-ssr
 /release-artifacts
 CodexMonitor.zip
 .codex-worktrees/
+
+# Pi adapter build artifacts
+pi-adapter/node_modules/
+pi-adapter/dist/
+
+# Claude app server build artifacts (unused experiment)
+claude-app-server/target/

@@ -66,7 +66,7 @@ type SettingsViewProps = {
 };
 
 type SettingsSection = "projects" | "display" | "dictation";
-type CodexSection = SettingsSection | "codex" | "experimental";
+type CodexSection = SettingsSection | "codex" | "providers" | "experimental";
 
 export function SettingsView({
   workspaceGroups,
@@ -387,6 +387,14 @@ export function SettingsView({
             >
               <TerminalSquare aria-hidden />
               Codex
+            </button>
+            <button
+              type="button"
+              className={`settings-nav ${activeSection === "providers" ? "active" : ""}`}
+              onClick={() => setActiveSection("providers")}
+            >
+              <LayoutGrid aria-hidden />
+              Providers
             </button>
             <button
               type="button"
@@ -1109,6 +1117,44 @@ export function SettingsView({
                   </div>
                 </div>
 
+              </section>
+            )}
+            {activeSection === "providers" && (
+              <section className="settings-section">
+                <div className="settings-section-title">Providers</div>
+                <div className="settings-section-subtitle">
+                  LLM provider authentication. Set API keys as environment variables when running CodexMonitor.
+                </div>
+                <div className="settings-providers-list">
+                  <div className="settings-provider-row">
+                    <span className="settings-provider-icon">🟣</span>
+                    <span className="settings-provider-name">Anthropic (Claude)</span>
+                    <span className="settings-provider-status">ANTHROPIC_API_KEY or OAuth</span>
+                  </div>
+                  <div className="settings-provider-row">
+                    <span className="settings-provider-icon">🟢</span>
+                    <span className="settings-provider-name">OpenAI</span>
+                    <span className="settings-provider-status">OPENAI_API_KEY</span>
+                  </div>
+                  <div className="settings-provider-row">
+                    <span className="settings-provider-icon">🔵</span>
+                    <span className="settings-provider-name">Google (Gemini)</span>
+                    <span className="settings-provider-status">GOOGLE_API_KEY</span>
+                  </div>
+                  <div className="settings-provider-row">
+                    <span className="settings-provider-icon">🟠</span>
+                    <span className="settings-provider-name">Mistral</span>
+                    <span className="settings-provider-status">MISTRAL_API_KEY</span>
+                  </div>
+                  <div className="settings-provider-row">
+                    <span className="settings-provider-icon">⚡</span>
+                    <span className="settings-provider-name">OpenCode (Grok)</span>
+                    <span className="settings-provider-status">OPENCODE_API_KEY</span>
+                  </div>
+                </div>
+                <div className="settings-section-subtitle" style={{ marginTop: 16 }}>
+                  When using pi-adapter, credentials are read from ~/.pi/agent/auth.json for Claude OAuth.
+                </div>
               </section>
             )}
             {activeSection === "experimental" && (

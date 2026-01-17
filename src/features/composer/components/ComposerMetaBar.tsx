@@ -1,12 +1,14 @@
 import type { CSSProperties } from "react";
 import type { AccessMode, ThreadTokenUsage } from "../../../types";
 
+type ModelInfo = { id: string; displayName: string; model: string; provider?: string };
+
 type ComposerMetaBarProps = {
   disabled: boolean;
   collaborationModes: { id: string; label: string }[];
   selectedCollaborationModeId: string | null;
   onSelectCollaborationMode: (id: string | null) => void;
-  models: { id: string; displayName: string; model: string }[];
+  models: ModelInfo[];
   selectedModelId: string | null;
   onSelectModel: (id: string) => void;
   reasoningOptions: string[];
@@ -15,6 +17,29 @@ type ComposerMetaBarProps = {
   accessMode: AccessMode;
   onSelectAccessMode: (mode: AccessMode) => void;
   contextUsage?: ThreadTokenUsage | null;
+};
+
+// Helper to group models by provider
+function getProvider(m: ModelInfo): string {
+  if (m.provider) return m.provider;
+  // Infer from model ID if no provider field
+  if (m.model.startsWith("claude-")) return "anthropic";
+  if (m.model.startsWith("gpt-") || m.model.startsWith("o1-") || m.model.startsWith("o3-")) return "openai";
+  if (m.model.startsWith("gemini-")) return "google";
+  if (m.model.startsWith("mistral") || m.model.startsWith("codestral") || m.model.startsWith("devstral")) return "mistral";
+  if (m.model.startsWith("grok") || m.model.includes("pickle") || m.model.includes("glm")) return "opencode";
+  return "other";
+}
+
+const providerLabels: Record<string, string> = {
+  anthropic: "🟣 Anthropic",
+  openai: "🟢 OpenAI",
+  google: "🔵 Google",
+  mistral: "🟠 Mistral",
+  opencode: "⚡ OpenCode",
+  "google-antigravity": "☁️ Google Antigravity",
+  "opencode-zen": "⚡ OpenCode Zen",
+  other: "📦 Other",
 };
 
 export function ComposerMetaBar({
@@ -45,6 +70,14 @@ export function ComposerMetaBar({
         )
       : null;
 
+  // Group models by provider
+  const providerGroups = models.reduce((acc, m) => {
+    const provider = getProvider(m);
+    if (!acc[provider]) acc[provider] = [];
+    acc[provider].push(m);
+    return acc;
+  }, {} as Record<string, ModelInfo[]>);
+
   return (
     <div className="composer-bar">
       <div className="composer-meta">
@@ -52,8 +85,10 @@ export function ComposerMetaBar({
           <div className="composer-select-wrap">
             <span className="composer-icon" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="1.4" />
+                <circle cx="15" cy="7" r="3" stroke="currentColor" strokeWidth="1.4" />
                 <path
-                  d="M7 7h10M7 12h6M7 17h8"
+                  d="M3 19c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6"
                   stroke="currentColor"
                   strokeWidth="1.4"
                   strokeLinecap="round"
@@ -61,7 +96,7 @@ export function ComposerMetaBar({
               </svg>
             </span>
             <select
-              className="composer-select composer-select--model"
+              className="composer-select composer-select--collab"
               aria-label="Collaboration mode"
               value={selectedCollaborationModeId ?? ""}
               onChange={(event) =>
@@ -69,7 +104,7 @@ export function ComposerMetaBar({
               }
               disabled={disabled}
             >
-              <option value="">Default mode</option>
+              <option value="">Solo</option>
               {collaborationModes.map((mode) => (
                 <option key={mode.id} value={mode.id}>
                   {mode.label}
@@ -114,10 +149,14 @@ export function ComposerMetaBar({
             disabled={disabled}
           >
             {models.length === 0 && <option value="">No models</option>}
-            {models.map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.displayName || model.model}
-              </option>
+            {Object.entries(providerGroups).map(([provider, providerModels]) => (
+              <optgroup key={provider} label={providerLabels[provider] || provider}>
+                {providerModels.map((model, idx) => (
+                  <option key={`${provider}-${model.id}-${idx}`} value={model.id}>
+                    {model.displayName || model.model}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>
