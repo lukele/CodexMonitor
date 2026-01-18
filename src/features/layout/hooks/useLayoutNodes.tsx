@@ -462,6 +462,7 @@ export function useLayoutNodes(options: LayoutNodesOptions): LayoutNodesResult {
         logLoading={options.gitLogLoading}
         files={options.gitStatus.files}
         onSelectFile={options.onSelectDiff}
+        selectedPath={options.selectedDiffPath}
         logEntries={options.gitLogEntries}
         logTotal={options.gitLogTotal}
         logAhead={options.gitLogAhead}
